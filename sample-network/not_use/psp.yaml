@@ -1,0 +1,45 @@
+apiVersion: policy/v1beta1
+kind: PodSecurityPolicy
+metadata:
+  name: kata-psp
+spec:
+  privileged: false
+  allowPrivilegeEscalation: false
+  requiredDropCapabilities:
+    - ALL
+  hostNetwork: false
+  hostPorts:
+    - min: 0
+      max: 65535
+  seLinux:
+    rule: 'RunAsAny'
+  runAsUser:
+    rule: 'MustRunAsNonRoot'
+  fsGroup:
+    rule: 'MustRunAs'
+  supplementalGroups:
+    rule: 'MustRunAs'
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: psp:kata-role
+rules:
+- apiGroups: ['policy']
+  resources: ['podsecuritypolicies']
+  verbs:     ['use']
+  resourceNames:
+  - kata-psp
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: psp:kata-rolebinding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: psp:kata-role
+subjects:
+- kind: ServiceAccount
+  name: default
+  namespace: test-network
